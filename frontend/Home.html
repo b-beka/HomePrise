@@ -1,13 +1,538 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>House Search & Price Predictor — Bekzhan</title>
+  <style>
+    :root{
+      --bg:#e9ecef;
+      --card:#f9fafb;
+      --blue-700:#3b82f6;
+      --blue-500:#60a5fa;
+      --gray-900:#1e293b;
+      --gray-700:#334155;
+      --gray-500:#475569;
+      --muted:#6b7280;
+      --accent:#cbd5e1;
+      --radius:12px;
+      font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--gray-900)}
+
+    .wrap{max-width:1100px;margin:36px auto;padding:24px}
+
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px;justify-content:space-between}
+    .logo{width:60px;height:60px;border-radius:14px;background:linear-gradient(135deg,var(--blue-700),var(--blue-500));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;box-shadow:0 6px 18px rgba(15,98,254,0.12)}
+    .title h1{margin:0;font-size:22px;font-weight:700;color:var(--gray-900)}
+    .title p{margin:2px 0 0;color:var(--gray-500);font-size:14px}
+
+    .lang-switch{padding:8px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--card);cursor:pointer;font-weight:500;color:var(--gray-700)}
+    .lang-switch:hover{background:#e2e8f0}
+
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:20px}
+
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 6px 18px rgba(0,0,0,0.05);}
+    .card h2{margin:0 0 12px;font-size:17px;color:var(--gray-900)}
+
+    form .row{display:flex;gap:12px;margin-bottom:12px}
+    label{display:block;font-size:13px;color:var(--gray-700);margin-bottom:6px;font-weight:500}
+    input[type="text"], input[type="number"], select, textarea, input[type="date"]{
+      width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--accent);background:#fff;font-size:14px;color:var(--gray-900);font-family:inherit;
+    }
+    textarea{min-height:90px;resize:vertical}
+
+    .col-2{flex:1}
+    .col-3{flex:0.6}
+
+    .muted{font-size:13px;color:var(--muted);margin-bottom:8px}
+
+    .features{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:6px 10px;border-radius:999px;border:1px solid var(--accent);background:#f1f5f9;font-size:13px;color:var(--gray-700)}
+
+    .controls{display:flex;gap:10px;align-items:center;margin-top:14px}
+    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--blue-700);color:white;font-weight:600;cursor:pointer;transition:background 0.2s}
+    .btn:hover{background:var(--blue-500)}
+    .btn.ghost{background:transparent;border:1px solid var(--blue-500);color:var(--blue-700)}
+
+    .sidebar{position:relative}
+    .result-card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 8px 24px rgba(0,0,0,0.05)}
+    .price{font-size:28px;font-weight:700;color:var(--blue-700)}
+    .meta{display:flex;gap:12px;color:var(--gray-500);margin-top:8px}
+
+    .map-placeholder{height:160px;border-radius:10px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:var(--muted);margin-top:12px;font-weight:500}
+
+    .history{margin-top:14px}
+    .history-item{display:flex;justify-content:space-between;padding:10px;border-radius:10px;background:#f8fafc;margin-bottom:8px;border:1px solid var(--accent)}
+
+    /* Upload previews */
+    .previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .preview{width:100px;height:70px;border-radius:8px;overflow:hidden;border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;background:#fff}
+    .preview img{max-width:100%;max-height:100%;object-fit:cover}
+    .preview video{max-width:100%;max-height:100%}
+
+    /* Comments */
+    .comments{margin-top:12px}
+    .comment-item{padding:8px;border-radius:8px;background:#fff;border:1px solid var(--accent);margin-bottom:8px}
+
+    /* Calendar small */
+    .calendar-box{margin-top:12px;padding:12px;border-radius:10px;background:#fff;border:1px solid var(--accent);display:flex;flex-direction:column;gap:8px}
+
+    @media (max-width:980px){.grid{grid-template-columns:1fr}.sidebar{order:2}.card{order:1}}
+
+    .muted-note{font-size:12px;color:var(--muted)}
+    .spinner{width:18px;height:18px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:var(--blue-700);animation:spin 1s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .small-muted{font-size:12px;color:var(--muted)}
+    .remove-btn{background:transparent;border:0;color:var(--muted);cursor:pointer}
+  </style>
 </head>
 <body>
-    <div>
-        
+  <div class="wrap">
+    <header>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="logo">BH</div>
+        <div class="title">
+          <h1 id="header-title">House Details</h1>
+          <p id="header-sub">Fill in the property information — ML will predict price (integration point included).</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="lang-switch" id="langBtn">Русский</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <main class="card">
+        <h2 id="form-title">Property Details</h2>
+        <form id="propForm">
+          <div class="row">
+            <div class="col-2">
+              <label id="lbl-address" for="address">Address</label>
+              <input id="address" name="address" type="text" placeholder="123 Main St" />
+            </div>
+            <div class="col-3">
+              <label id="lbl-city" for="city">City</label>
+              <input id="city" name="city" type="text" placeholder="Almaty" />
+            </div>
+            <div style="width:120px">
+              <label id="lbl-zip" for="zip">ZIP</label>
+              <input id="zip" name="zip" type="text" placeholder="050000" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label id="lbl-type" for="type">Property Type</label>
+              <select id="type" name="type">
+                <option id="opt-house">House</option>
+                <option id="opt-apartment">Apartment</option>
+                <option id="opt-townhouse">Townhouse</option>
+                <option id="opt-villa">Villa</option>
+              </select>
+            </div>
+            <div class="small">
+              <label id="lbl-beds" for="beds">Beds</label>
+              <input id="beds" name="beds" type="number" min="0" step="1" value="3" />
+            </div>
+            <div class="small">
+              <label id="lbl-baths" for="baths">Baths</label>
+              <input id="baths" name="baths" type="number" min="0" step="0.5" value="2" />
+            </div>
+            <div style="width:150px">
+              <label id="lbl-year" for="year">Year Built</label>
+              <input id="year" name="year" type="number" min="1800" max="2025" value="2005" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-2">
+              <label id="lbl-area" for="area">Living Area (sq.m)</label>
+              <input id="area" name="area" type="number" min="0" value="120" />
+            </div>
+            <div>
+              <label id="lbl-lot" for="lot">Lot Size (sq.m)</label>
+              <input id="lot" name="lot" type="number" min="0" value="400" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div style="flex:1">
+              <label id="lbl-lat" for="latitude">Latitude</label>
+              <input id="latitude" name="latitude" type="text" placeholder="43.25" />
+            </div>
+            <div style="flex:1">
+              <label id="lbl-lon" for="longitude">Longitude</label>
+              <input id="longitude" name="longitude" type="text" placeholder="76.92" />
+            </div>
+          </div>
+
+          <div>
+            <label id="lbl-notes" for="notes">Notes / Description</label>
+            <textarea id="notes" name="notes" placeholder="Any additional info (renovated, sea view, near transport, etc.)"></textarea>
+          </div>
+
+          <div style="margin-top:10px">
+            <label class="muted">Amenities</label>
+            <div class="features">
+              <label class="chip"><input type="checkbox" name="amenities" value="garage"/> <span id="amen-garage">Garage</span></label>
+              <label class="chip"><input type="checkbox" name="amenities" value="pool"/> <span id="amen-pool">Pool</span></label>
+              <label class="chip"><input type="checkbox" name="amenities" value="garden"/> <span id="amen-garden">Garden</span></label>
+              <label class="chip"><input type="checkbox" name="amenities" value="balcony"/> <span id="amen-balcony">Balcony</span></label>
+              <label class="chip"><input type="checkbox" name="amenities" value="fireplace"/> <span id="amen-fireplace">Fireplace</span></label>
+            </div>
+          </div>
+
+          <!-- New: Date / Calendar -->
+          <div style="margin-top:12px">
+            <label id="lbl-visit" for="visitDate">Select date (calendar)</label>
+            <input id="visitDate" name="visitDate" type="date" />
+            <div class="calendar-box" id="calendarBox">
+              <div class="small-muted">Selected date:</div>
+              <div id="selectedDate">—</div>
+            </div>
+          </div>
+
+          <!-- New: Upload photos & videos -->
+          <div style="margin-top:12px">
+            <label id="lbl-media" for="media">Photos / Video</label>
+            <input id="media" name="media" type="file" accept="image/*,video/*" multiple />
+            <div class="previews" id="previews"></div>
+            <div class="small-muted">You can upload images or short videos. Files are previewed locally (not uploaded).</div>
+          </div>
+
+          <!-- New: Comments section -->
+          <div style="margin-top:12px">
+            <label id="lbl-comment" for="commentText">Add Comment</label>
+            <div style="display:flex;gap:8px">
+              <input id="commentText" placeholder="Write a comment..." />
+              <button type="button" id="addCommentBtn" class="btn">Add</button>
+            </div>
+            <div class="comments" id="comments"></div>
+          </div>
+
+          <div class="controls">
+            <button type="button" id="predictBtn" class="btn">Predict Price</button>
+            <button type="reset" class="btn ghost">Reset</button>
+            <div style="margin-left:auto" class="muted-note" id="api-note">API integration point included in code</div>
+          </div>
+        </form>
+
+        <section style="margin-top:18px">
+          <h3 id="examples-title" style="margin:0 0 8px">Search Examples</h3>
+          <div class="muted" id="examples-text">Try different combinations: city only, or full address + features (garage, pool). Use coordinates for better ML accuracy.</div>
+        </section>
+      </main>
+
+      <aside class="sidebar">
+        <div class="result-card card">
+          <h3 id="result-title" style="margin:0 0 6px">Prediction Result</h3>
+          <div id="resultArea">
+            <div class="muted-note" id="no-pred">No prediction yet — fill the form and press <strong>Predict Price</strong>.</div>
+          </div>
+
+          <div class="map-placeholder" id="map">Map / Location preview (placeholder)</div>
+
+          <div class="history">
+            <h4 id="history-title" style="margin:12px 0 8px">Recent Queries</h4>
+            <div id="historyList"></div>
+          </div>
+        </div>
+      </aside>
     </div>
+  </div>
+
+  <script>
+    (function(){
+      const form = document.getElementById('propForm');
+      const predictBtn = document.getElementById('predictBtn');
+      const resultArea = document.getElementById('resultArea');
+      const historyList = document.getElementById('historyList');
+      const mapEl = document.getElementById('map');
+
+      const visitDate = document.getElementById('visitDate');
+      const selectedDate = document.getElementById('selectedDate');
+
+      const mediaInput = document.getElementById('media');
+      const previews = document.getElementById('previews');
+
+      const commentText = document.getElementById('commentText');
+      const addCommentBtn = document.getElementById('addCommentBtn');
+      const commentsBox = document.getElementById('comments');
+
+      const langBtn = document.getElementById('langBtn');
+      let currentLang = localStorage.getItem('hs_lang') || 'en';
+
+      const PREDICT_API_URL = '/api/predict';
+
+      const translations = {
+        en: {
+          headerTitle: 'House Details',
+          headerSub: 'Fill in the property information — ML will predict price (integration point included).',
+          formTitle: 'Property Details',
+          address: 'Address',
+          city: 'City',
+          zip: 'ZIP',
+          type: 'Property Type',
+          optHouse: 'House',
+          optApartment: 'Apartment',
+          optTownhouse: 'Townhouse',
+          optVilla: 'Villa',
+          beds: 'Beds',
+          baths: 'Baths',
+          year: 'Year Built',
+          area: 'Living Area (sq.m)',
+          lot: 'Lot Size (sq.m)',
+          lat: 'Latitude',
+          lon: 'Longitude',
+          notes: 'Notes / Description',
+          amenGarage: 'Garage',
+          amenPool: 'Pool',
+          amenGarden: 'Garden',
+          amenBalcony: 'Balcony',
+          amenFireplace: 'Fireplace',
+          visit: 'Select date (calendar)',
+          media: 'Photos / Video',
+          comment: 'Add Comment',
+          predict: 'Predict Price',
+          apiNote: 'API integration point included in code',
+          examplesTitle: 'Search Examples',
+          examplesText: 'Try different combinations: city only, or full address + features (garage, pool). Use coordinates for better ML accuracy.',
+          resultTitle: 'Prediction Result',
+          noPred: 'No prediction yet — fill the form and press <strong>Predict Price</strong>.',
+          historyTitle: 'Recent Queries',
+          switchLabel: 'Русский'
+        },
+        ru: {
+          headerTitle: 'Детали недвижимости',
+          headerSub: 'Заполните информацию о недвижимости — ML предскажет цену (точка интеграции включена).',
+          formTitle: 'Характеристики недвижимости',
+          address: 'Адрес',
+          city: 'Город',
+          zip: 'Индекс',
+          type: 'Тип недвижимости',
+          optHouse: 'Дом',
+          optApartment: 'Квартира',
+          optTownhouse: 'Таунхаус',
+          optVilla: 'Вилла',
+          beds: 'Спальни',
+          baths: 'Ванные',
+          year: 'Год постройки',
+          area: 'Площадь (кв.м)',
+          lot: 'Площадь участка (кв.м)',
+          lat: 'Широта',
+          lon: 'Долгота',
+          notes: 'Примечания / Описание',
+          amenGarage: 'Гараж',
+          amenPool: 'Бассейн',
+          amenGarden: 'Сад',
+          amenBalcony: 'Балкон',
+          amenFireplace: 'Камин',
+          visit: 'Выберите дату (календарь)',
+          media: 'Фото / Видео',
+          comment: 'Комментарий',
+          predict: 'Предсказать цену',
+          apiNote: 'Точка интеграции API включена в код',
+          examplesTitle: 'Примеры поиска',
+          examplesText: 'Пробуйте разные комбинации: только город или полный адрес + удобства (гараж, бассейн). Используйте координаты для большей точности ML.',
+          resultTitle: 'Результат предсказания',
+          noPred: 'Предсказаний пока нет — заполните форму и нажмите <strong>Предсказать цену</strong>.',
+          historyTitle: 'Последние запросы',
+          switchLabel: 'English'
+        }
+      };
+
+      function applyLang(){
+        const t = translations[currentLang];
+        document.getElementById('header-title').textContent = t.headerTitle;
+        document.getElementById('header-sub').textContent = t.headerSub;
+        document.getElementById('form-title').textContent = t.formTitle;
+        document.getElementById('lbl-address').textContent = t.address;
+        document.getElementById('lbl-city').textContent = t.city;
+        document.getElementById('lbl-zip').textContent = t.zip;
+        document.getElementById('lbl-type').textContent = t.type;
+        document.getElementById('opt-house').textContent = t.optHouse;
+        document.getElementById('opt-apartment').textContent = t.optApartment;
+        document.getElementById('opt-townhouse').textContent = t.optTownhouse;
+        document.getElementById('opt-villa').textContent = t.optVilla;
+        document.getElementById('lbl-beds').textContent = t.beds;
+        document.getElementById('lbl-baths').textContent = t.baths;
+        document.getElementById('lbl-year').textContent = t.year;
+        document.getElementById('lbl-area').textContent = t.area;
+        document.getElementById('lbl-lot').textContent = t.lot;
+        document.getElementById('lbl-lat').textContent = t.lat;
+        document.getElementById('lbl-lon').textContent = t.lon;
+        document.getElementById('lbl-notes').textContent = t.notes;
+        document.getElementById('amen-garage').textContent = t.amenGarage;
+        document.getElementById('amen-pool').textContent = t.amenPool;
+        document.getElementById('amen-garden').textContent = t.amenGarden;
+        document.getElementById('amen-balcony').textContent = t.amenBalcony;
+        document.getElementById('amen-fireplace').textContent = t.amenFireplace;
+        document.getElementById('lbl-visit').textContent = t.visit;
+        document.getElementById('lbl-media').textContent = t.media;
+        document.getElementById('lbl-comment').textContent = t.comment;
+        document.getElementById('predictBtn').textContent = t.predict;
+        document.getElementById('api-note').textContent = t.apiNote;
+        document.getElementById('examples-title').textContent = t.examplesTitle;
+        document.getElementById('examples-text').textContent = t.examplesText;
+        document.getElementById('result-title').textContent = t.resultTitle;
+        document.getElementById('no-pred').innerHTML = t.noPred;
+        document.getElementById('history-title').textContent = t.historyTitle;
+        langBtn.textContent = t.switchLabel;
+      }
+
+      langBtn.addEventListener('click', ()=>{
+        currentLang = currentLang === 'en' ? 'ru' : 'en';
+        localStorage.setItem('hs_lang', currentLang);
+        applyLang();
+      });
+
+      function readForm(){
+        const fd = new FormData(form);
+        const amenities = fd.getAll('amenities');
+        return {
+          address: fd.get('address') || '',
+          city: fd.get('city') || '',
+          zip: fd.get('zip') || '',
+          type: fd.get('type') || 'House',
+          beds: Number(fd.get('beds') || 0),
+          baths: Number(fd.get('baths') || 0),
+          year: Number(fd.get('year') || 0),
+          area: Number(fd.get('area') || 0),
+          lot: Number(fd.get('lot') || 0),
+          latitude: fd.get('latitude') || '',
+          longitude: fd.get('longitude') || '',
+          notes: fd.get('notes') || '',
+          amenities,
+          visitDate: fd.get('visitDate') || null,
+        };
+      }
+
+      function showLoading(){
+        resultArea.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span class="spinner"></span><div class="muted-note">Predicting price...</div></div>';
+      }
+
+      function showResult(price, details){
+        const markup = `
+          <div>
+            <div class="price">${formatCurrency(price)}</div>
+            <div class="meta">Estimated market price</div>
+            <div style="margin-top:10px;font-size:14px;color:var(--gray-500)">Model details: <em>${details}</em></div>
+          </div>
+        `;
+        resultArea.innerHTML = markup;
+      }
+
+      function formatCurrency(n){
+        if (typeof Intl !== 'undefined'){
+          return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
+        }
+        return '$' + Math.round(n).toLocaleString();
+      }
+
+      function addHistory(entry){
+        const el = document.createElement('div');
+        el.className = 'history-item';
+        el.innerHTML = `<div>${entry.address || entry.city || 'Unnamed property'}</div><div style="text-align:right"><div style="font-weight:600">${formatCurrency(entry.price)}</div><div style="font-size:12px;color:var(--muted)">${new Date(entry.time).toLocaleString()}</div></div>`;
+        historyList.prepend(el);
+        while(historyList.children.length>6) historyList.removeChild(historyList.lastChild);
+      }
+
+      function simulatePrediction(data){
+        const base = 30000;
+        const price = base + data.area * 800 + data.beds * 12000 + data.baths * 8000 + data.lot * 5 + (data.amenities.includes('pool')?20000:0) + (data.amenities.includes('garage')?8000:0);
+        const age = (data.year && data.year>0) ? (new Date().getFullYear() - data.year) : 20;
+        const ageFactor = Math.max(0.8, 1 - age * 0.005);
+        return Math.round(price * ageFactor);
+      }
+
+      async function predict(){
+        const data = readForm();
+        showLoading();
+        try{
+          await new Promise(r=>setTimeout(r,700));
+          const predicted = simulatePrediction(data);
+          const modelInfo = 'mock-heuristic-1';
+          showResult(predicted, modelInfo);
+          addHistory({price:predicted,address:data.address||data.city,time:Date.now()});
+          if (data.latitude && data.longitude) {
+            mapEl.innerHTML = `Lat: ${data.latitude}, Lon: ${data.longitude}`;
+          } else if (data.city) {
+            mapEl.innerHTML = `${data.city} — ${data.type}`;
+          } else {
+            mapEl.innerHTML = 'No location provided';
+          }
+        }catch(err){
+          resultArea.innerHTML = '<div style="color:#b00020">Prediction failed — check console for details.</div>';
+          console.error(err);
+        }
+      }
+
+      // date handling
+      visitDate.addEventListener('change', ()=>{
+        selectedDate.textContent = visitDate.value ? new Date(visitDate.value).toDateString() : '—';
+      });
+
+      // media previews
+      mediaInput.addEventListener('change', (e)=>{
+        previews.innerHTML = '';
+        const files = Array.from(e.target.files || []);
+        files.forEach((file, idx)=>{
+          const url = URL.createObjectURL(file);
+          const box = document.createElement('div');
+          box.className = 'preview';
+          if (file.type.startsWith('image/')){
+            const img = document.createElement('img'); img.src = url; box.appendChild(img);
+          } else if (file.type.startsWith('video/')){
+            const vid = document.createElement('video'); vid.src = url; vid.controls = true; box.appendChild(vid);
+          } else {
+            box.textContent = file.name;
+          }
+          // remove button
+          const rem = document.createElement('button'); rem.className = 'remove-btn'; rem.textContent = '✕';
+          rem.title = 'Remove';
+          rem.style.position='absolute'; rem.style.margin='0';
+          rem.onclick = ()=>{ box.remove(); URL.revokeObjectURL(url); }
+          const wrapper = document.createElement('div'); wrapper.style.position='relative'; wrapper.appendChild(box); wrapper.appendChild(rem);
+          previews.appendChild(wrapper);
+        });
+      });
+
+      // comments
+      addCommentBtn.addEventListener('click', ()=>{
+        const txt = commentText.value.trim();
+        if (!txt) return;
+        const c = document.createElement('div'); c.className='comment-item';
+        c.innerHTML = `<div style="font-size:13px">${escapeHtml(txt)}</div><div style="font-size:12px;color:var(--muted);margin-top:6px">${new Date().toLocaleString()}</div>`;
+        commentsBox.prepend(c);
+        commentText.value='';
+      });
+
+      function escapeHtml(s){return s.replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m];});}
+
+      predictBtn.addEventListener('click', function(){
+        predictBtn.disabled = true;
+        predictBtn.style.opacity = 0.8;
+        predict().finally(()=>{predictBtn.disabled=false;predictBtn.style.opacity=1});
+      });
+
+      form.addEventListener('reset', ()=>{
+        previews.innerHTML = '';
+        commentsBox.innerHTML = '';
+        selectedDate.textContent = '—';
+        mapEl.innerHTML = 'Map / Location preview (placeholder)';
+      });
+
+      // form submit via Enter
+      form.addEventListener('submit', function(e){e.preventDefault();predictBtn.click();});
+
+      // initial language
+      applyLang();
+
+    })();
+  </script>
 </body>
 </html>
